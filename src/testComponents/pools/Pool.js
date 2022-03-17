@@ -2,13 +2,17 @@ import React, {useEffect, useState} from "react";
 import {useNavigate, useParams} from "react-router-dom";
 import {useForm} from 'react-hook-form';
 
+import {getHost, createHost, updateHost, existHostByName_bdExternal} from "../../services/Hosts";
+
 import CardActions from "@mui/material/CardActions";
 import InputLabel from '@mui/material/InputLabel';
 import TextField from '@mui/material/TextField';
 import Alert from "@mui/material/Alert";
+
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from '@mui/icons-material/Clear';
 import CheckIcon from '@mui/icons-material/Check';
+
 import FormControl from '@mui/material/FormControl';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
@@ -19,13 +23,9 @@ import Card from "@mui/material/Card";
 import Divider from "@mui/material/Divider";
 import {styled} from "@mui/material/styles";
 
-import {Title} from "../utils/Title";
-import {Loading, GetIdUser, Message} from "../utils/LittleComponents";
-import {getHost, createHost, updateHost, existHostByName_bdExternal} from "../../services/Hosts";
-import OutlinedInput from "@mui/material/OutlinedInput";
-import Checkbox from "@mui/material/Checkbox";
-import ListItemText from "@mui/material/ListItemText";
-import {getSais} from "../../services/Sais";
+
+import {Title} from "../../components/utils/Title";
+import {Loading, GetIdUser} from "../../components/utils/LittleComponents";
 
 
 const Item = styled(Paper)(({theme}) => ({
@@ -37,29 +37,17 @@ const Item = styled(Paper)(({theme}) => ({
     marginTop: 50
 }));
 
-const ITEM_HEIGHT = 60;
-const ITEM_PADDING_TOP = 20;
-const MenuProps = {
-    PaperProps: {
-        style: {
-            maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
-            width: 250,
-        },
-    },
-};
-
 /***
- * Componente formulario para (Buscar o Editar) un Host
- * @param: idHost = Si se recibe un id mayor a 0 es un host para editar, de lo contrario es un host para crear
+ * Componente formulario para (Crear o Editar) un Pool
+ * @param: idPool = Si se recibe un id mayor a 0 es un pool para editar, de lo contrario es un host para crear
  ***/
-function Host() {
+function Pool() {
 
     const {register, handleSubmit, formState: {errors}} = useForm();
 
-    const {idHost} = useParams();
+    const {idPool} = useParams();
     const {idGroup} = useParams();
     const [existMachine, setExistMachine] = useState(false);
-    const [existHost, setExistHost] = useState(false);
     const [isSearch, setIsSearch] = useState(false);
     const [isLoading, setLoading] = useState(false);
     const [isReady, setIsReady] = useState(false);
@@ -68,23 +56,23 @@ function Host() {
     const [nameTextField, setNameTextField] = useState('');
 
     const [id, setId] = useState(0);
-    const [name_host, setNameHost] = useState('');
+    const [name_pool, setNamePool] = useState('');
     const [ip, setIp] = useState('');
-    const [mac, setMac] = useState('');
+    const [url, setUrl] = useState('');
+    const [username, setUsername] = useState('');
+    const [type, setType] = useState(0);
+
+
     const [so, setSo] = useState('');
     const [group, setGroup] = useState(null);
-    const [order, setOrder] = useState(null);
-    const [description, setDescription] = useState('');
+
     const [pool, setPool] = useState('');
     const [user, setUser] = useState('');
-    const [type_host, setType_host] = useState('');
-    const [saisSelected, setSaisSelected] = useState([]);
-    const [sais, setSais] = useState([]);
 
     let navigate = useNavigate();
 
     useEffect(function () {
-        if (idHost > 0) {
+        if (idPool > 0) {
             setExistMachine(true);
         }
         getHost_Api();
@@ -93,59 +81,20 @@ function Host() {
     // <<-- | O B T E N E R - U N - H O S T  |-->
     const getHost_Api = async () => {
 
-         //Se obtienen los SAIS existentes para llenar el select
-        const saisJson = await getSais();
+        if (parseInt(idPool) > 0) {
 
-        var listSais = [];
-        saisJson.results.map((value) => {
-            var objSai = {'id': value['id'], 'name_sai': value['name_sai']};
-            listSais.push(objSai);
-        });
-
-        if (listSais.length > 0) {
-            //Ordenamos por orden alfabetico a-z
-            var resultSais = listSais.sort(function (a, b) {
-                if (a.name_sai === b.name_sai) {
-                    return 0;
-                }
-                if (a.name_sai < b.name_sai) {
-                    return -1;
-                }
-                return 1;
-            });
-
-            setSais(resultSais);
-        }
-
-
-        if (parseInt(idHost) > 0) {
-
-            const hostJson = await getHost(`${idHost}`);
+            const hostJson = await getHost(`${idPool}`);
 
             setId(hostJson.id);
-            setNameHost(hostJson.name_host);
-            setIp(hostJson.ip === null ? '' : hostJson.ip);
-            setMac(hostJson.mac === null ? '' : hostJson.mac);
-            setSo(hostJson.so === null ? '' : hostJson.so);
+            setNamePool(hostJson.name_pool);
+            setIp(hostJson.ip);
+            setUrl(hostJson.url);
+            setSo(hostJson.so);
             setGroup(hostJson.group);
-            setOrder(hostJson.order);
-            setDescription(hostJson.description === null ? '' : hostJson.description);
-            setPool(hostJson.pool === null ? null : hostJson.pool.id);
+            setType(hostJson.type);
+            setUsername(hostJson.username);
+            setPool(hostJson.pool);
             setUser(hostJson.user);
-            setType_host(hostJson.type_host);
-
-            //Sais del Host
-            var arraySais = [];
-            if (listSais.length > 0) {
-                hostJson.sais.map((value) => {
-                    listSais.map((sai) => {
-                        if(sai['id'] === value){
-                            arraySais.push(sai['name_sai']);
-                        }
-                    });
-                });
-                setSaisSelected(arraySais);
-            }
         }
 
         setIsReady(true);
@@ -153,7 +102,6 @@ function Host() {
 
     // <<-- | B U S C A R - M A Q U I N A - (BD EXTERNA ) |-->
     const searchByName = (nameMachine) => async () => {
-        setExistHost(false);
         setLoading(true);
         const machine = await existHostByName_bdExternal(nameMachine.nameTextField);
         setIsSearch(true);
@@ -163,9 +111,9 @@ function Host() {
             setIsSearch(false);
             setLoading(false);
 
-            setNameHost(machine.name_host);
+            setNamePool(machine.name_pool);
             setIp(machine.ip);
-            setMac(machine.mac);
+            setUrl(machine.url);
         } else {
             setExistMachine(false);
             setIsSearch(true);
@@ -176,50 +124,27 @@ function Host() {
 
     //<<--| G U A R D A R - L O S - D A T O S |-->>
     const onSubmit = (data) => {
-        console.log(data)
         //e.preventDefault()
-        var id = idHost > 0 ? idHost : 0;
-        var ip_host = ip === '' ? null : ip;
-        var mac_host = mac === '' ? null : mac;
-        var so_host = so === '' ? null : so;
-        var pool_host = pool === null ? null : pool;
-        var typeHost = type_host !== '' ? type_host : "MF";
+        var id = idPool > 0 ? idPool : 0;
         var groupId = idGroup !== undefined ? idGroup : null;
-        var idsSais = getIdsSais();
-
         var modelHost = {
             "id": id,
-            name_host,
-            "ip": ip_host,
-            "mac": mac_host,
-            "so": so_host,
+            name_pool,
+            ip,
+            url,
+            so,
             "groupId": groupId,
-            "order": order,
-            description,
-            "poolId": pool_host,
-            "user": GetIdUser(),
-            "type_host": typeHost,
-             "sais": idsSais
+            "type": type,
+            username,
+            "pool": null,
+            "user": GetIdUser()
         }
 
-        if (idHost > 0) {
+        if (idPool > 0) {
             hostApi(modelHost, "update");
         } else {
             hostApi(modelHost, "create")
         }
-    }
-
-
-    function getIdsSais() {
-        var listIds = []
-        saisSelected.map((nameSai) => {
-            sais.map((sai) => {
-                if (sai['name_sai'] === nameSai) {
-                    listIds.push(sai['id']);
-                }
-            });
-        });
-        return listIds;
     }
 
     const hostApi = async (data, method) => {
@@ -233,8 +158,6 @@ function Host() {
 
         if (hostJson === "Created-OK" || hostJson === "Updated-OK") {
             navigate("/hosts")
-        } else if (hostJson === 'Im Used') {
-            setExistHost(true);
         } else if (hostJson === undefined) {
             console.log('Error Host ->, ', hostJson);
             setIsError(true);
@@ -242,20 +165,10 @@ function Host() {
     }
 
     // <<--| M A N E J A R - E L - C A M B I O - EN - EL - (TEXTFIELD) |-->>
-    const handleChangeTextField = (e) => {
+    const handleChange = (e) => {
         setNameTextField(e.currentTarget.value)
         setIsSearch(false)
     }
-    // <<--| M A N E J A R - E L - C A M B I O - EN - EL - (SELECT-SAIS) |-->>
-    const handleChangeSelect = (event) => {
-        const {
-            target: {value},
-        } = event;
-        setSaisSelected(
-            // On autofill we get a stringified value.
-            typeof value === 'string' ? value.split(',') : value,
-        );
-    };
 
     return (
         <>
@@ -266,48 +179,15 @@ function Host() {
                 alignItems="center"
                 justify="center"
                 marginTop={5}
-                marginBottom={8}
                 //justifyContent="center"
             >
-                <Title title={'MÁQUINA'}/>
+                <Title title={'POOL'}/>
                 <Item>
-                    {
-                        idHost == 0 &&
-                        <Grid container
-                              spacing={1}
-                              marginTop={1}
-                              marginBottom={1}>
-                            <Grid item xs={6} marginLeft={10}>
-                                <TextField
-                                    id="id_nameHostTextField"
-                                    name="nameHostTextField"
-                                    label="Nombre de Maquina"
-                                    size="small"
-                                    value={nameTextField}
-                                    variant="outlined"
-                                    className="form-control"
-                                    onChange={handleChangeTextField}
-                                />
-                            </Grid>
-                            <Grid item xs={4}>
-                                <Button variant="outlined" size="medium" startIcon={<SearchIcon/>}
-                                        onClick={searchByName({nameTextField})}>
-                                    Buscar
-                                </Button>
-                            </Grid>
-                        </Grid>
-                    }
-                    {
-                        isLoading && <Loading></Loading>
-                    }
-                    <Divider/>
-                    {existMachine &&
-                    <Grid marginTop={2} marginBottom={1}>
+                    <Grid marginTop={4} marginBottom={1}>
                         <form className="row-cols-1" onSubmit={handleSubmit(onSubmit)}>
                             <Card sx={{minWidth: 275}}>
                                 <Grid container
-                                      spacing={1}
-                                      justifyContent={"center"}>
+                                      spacing={1}>
                                     <Grid>
                                         <TextField
                                             hidden={true}
@@ -321,19 +201,19 @@ function Host() {
                                             onChange={(e) => setId(e.currentTarget.value)}
                                         />
                                     </Grid>
-                                    <Grid item xs={8} marginTop={2}>
+                                    <Grid item xs={6} marginTop={2}>
                                         <TextField
                                             disabled
                                             id="id_nameHost"
                                             name="nameHost"
                                             label="Nombre de Maquina"
                                             size="small"
-                                            value={name_host}
+                                            value={name_pool}
                                             variant="outlined"
                                             className="form-control"
                                         />
                                     </Grid>
-                                    <Grid item xs={8} marginTop={2}>
+                                    <Grid item xs={6} marginTop={2}>
                                         <TextField
                                             disabled
                                             id="id_ip"
@@ -345,76 +225,49 @@ function Host() {
                                             className="form-control"
                                         />
                                     </Grid>
-                                    <Grid item xs={8} marginTop={2}>
+                                    <Grid item xs={6} marginTop={2}>
                                         <TextField
                                             disabled
                                             id="id_mac"
-                                            name="mac"
-                                            label="Mac"
+                                            name="url"
+                                            label="url"
                                             size="small"
-                                            value={mac}
+                                            value={url}
                                             variant="outlined"
                                             className="form-control"
                                         />
                                     </Grid>
-                                    <Grid item xs={8} marginTop={2}>
-                                        <FormControl fullWidth variant="outlined" sx={{m: 0, minWidth: 100}}>
+                                    <Grid item xs={6} marginTop={1}>
+                                        <FormControl fullWidth variant="standard" sx={{m: 0, minWidth: 100}}>
                                             <InputLabel id="id-So-label">Sistema Operativo</InputLabel>
                                             <Select
                                                 labelId="id-So-label"
                                                 id="id_so"
                                                 value={so}
                                                 size="small"
-                                                autoFocus={so.length > 0 ? true : false}
+                                                autoFocus
                                                 error={errors.so ? true : false}
                                                 {...register("so", {required: true})}//se declara antes del onChange
                                                 onChange={(e) => setSo(e.target.value)}
-                                                input={<OutlinedInput label="Sistema Operativo"/>}
                                             >
                                                 <MenuItem value={'W'}>Windows</MenuItem>
                                                 <MenuItem value={'L'}>Linux</MenuItem>
-                                                <MenuItem value={'M'}>Mac</MenuItem>
+                                                <MenuItem value={'M'}>url</MenuItem>
                                             </Select>
                                         </FormControl>
                                     </Grid>
-                                    <Grid item xs={8} marginTop={2}>
-                                        <FormControl sx={{m: 0, width: 425}}>
-                                            <InputLabel id="demo-multiple-checkbox-label">SAI</InputLabel>
-                                            <Select
-                                                labelId="demo-multiple-checkbox-label"
-                                                id="demo-multiple-checkbox"
-                                                multiple
-                                                size="small"
-                                                value={saisSelected}
-                                                autoFocus={saisSelected.length > 0 ? true : false}
-                                                error={errors.sai ? true : false}
-                                                {...register("sai", {required: true})}//se declara antes del onChange
-                                                onChange={handleChangeSelect}
-                                                input={<OutlinedInput label="Sai"/>}
-                                                renderValue={(selected) => selected.join(', ')}
-                                                MenuProps={MenuProps}
-                                            >
-                                                {sais.map((sai) => (
-                                                    <MenuItem key={sai.id} value={sai.name_sai}>
-                                                        <Checkbox checked={saisSelected.indexOf(sai.name_sai) > -1}/>
-                                                        <ListItemText primary={sai.name_sai}/>
-                                                    </MenuItem>
-                                                ))}
-                                            </Select>
-                                        </FormControl>
-                                    </Grid>
-                                    <Grid item xs={8} marginTop={2}>
+                                    <Grid item xs={12} marginTop={2}>
                                         <TextField
                                             id="id_description"
-                                            name="description"
+                                            name="username"
                                             label="Descripción"
                                             size="small"
                                             multiline
-                                            rows={3}
-                                            value={description}
+                                            maxRows={2}
+                                            value={username}
                                             variant="outlined"
                                             className="form-control"
-                                            onChange={(e) => setDescription(e.target.value)}
+                                            onChange={(e) => setUsername(e.target.value)}
                                         />
                                     </Grid>
                                 </Grid>
@@ -441,11 +294,7 @@ function Host() {
                             </Card>
                         </form>
                     </Grid>
-                    }
-                    {existHost &&
-                    <Alert severity="warning">
-                        La máquina: <strong>{name_host}</strong> ya se encuentra dada de alta en el sistema
-                    </Alert>}
+
                     {!existMachine && isSearch &&
                     <Alert severity="warning">
                         <strong>Sin resultados - </strong>
@@ -461,4 +310,4 @@ function Host() {
 
 }
 
-export default Host;
+export default Pool;

@@ -91,7 +91,11 @@ async function createHost(host) {
     const responseJson = fetch(endpoint, requestOptions)
         .then(response => {
             if (response.ok) {
-                return response.json();
+                if (response.status === 226) {
+                    return "Im Used"
+                } else {
+                    return response.json();
+                }
             } else {
                 throw new Error(response.status);
             }
@@ -103,10 +107,10 @@ async function createHost(host) {
 }
 
 /***
- * Obtener el Host por nombre (Nombre de máquina DNS)
+ * Obtener el Host por nombre (BD Externa - Nombre de máquina DNS)
  * @returns {Promise<Hosts>}
  */
-async function existHostByName(nameMachine) {
+async function existHostByName_bdExternal(nameMachine) {
     var endpoint = `${baseUrl}/host/exists-machine/`;
 
     const requestOptions = {
@@ -181,4 +185,55 @@ async function getHostsMaster(idUser) {
     return responseJson
 }
 
-export {getHosts, createHost, getHost, updateHost, deleteHost, existHostByName, hostsByGroup, getHostsMaster}
+/***
+ * Obtener todos los Hosts que estan en un grupo
+ * @returns {Promise<Host>}
+ */
+async function getAllHostsInAGroup() {
+    var endpoint = `${baseUrl}/machinesInGroup/`;
+    const headers = {'Content-Type': 'application/json', 'Authorization': 'Token ' + GetToken(),}
+    //const headers = {'Content-Type': 'application/json', 'Authorization': 'Basic ' + btoa('alejojr:d1n4m1kjr'),}
+    const response = await fetch(endpoint, {headers})
+    const responseJson = await response.json()
+
+    return responseJson
+}
+
+/***
+ * Obtener el Host por nombre (BD Local)
+ * @returns {Promise<Hosts>}
+ */
+async function existHostByName_bdLocal(nameHost) {
+    var endpoint = `${baseUrl}/existsMachineByNameHost/`;
+
+    const requestOptions = {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'Authorization': 'Token ' + GetToken(),},
+        body: JSON.stringify({'nameHost': nameHost})
+    };
+
+    const responseJson = fetch(endpoint, requestOptions)
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error(response.status);
+            }
+        })
+        .catch(error => console.log('Error obteniendo el Host por nombre -> ', error));
+
+    return responseJson
+}
+
+export {
+    getHosts,
+    createHost,
+    getHost,
+    updateHost,
+    deleteHost,
+    existHostByName_bdExternal,
+    existHostByName_bdLocal,
+    hostsByGroup,
+    getHostsMaster,
+    getAllHostsInAGroup
+}

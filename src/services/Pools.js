@@ -90,7 +90,13 @@ async function createPool(pool) {
     const responseJson = fetch(endpoint, requestOptions)
         .then(response => {
             if (response.ok) {
-                return response.json();
+                if (response.status === 226) {
+                    return "Im Used"
+                } else if (response.status === 204) {
+                    return "Connection refused"
+                } else {
+                    return response.json();
+                }
             } else {
                 throw new Error(response.status);
             }
@@ -101,4 +107,36 @@ async function createPool(pool) {
     return responseJson
 }
 
-export {getPools, createPool, getPool, updatePool, deletePool }
+/***
+ * Sincronizar el pool
+ * @param pool
+ * @returns {Promise<syncronizePool>}
+ */
+async function syncronizePool(pool) {
+    var endpoint = `${baseUrl}/sync-pool/`;
+
+    const requestOptions = {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'Authorization': 'Token ' + GetToken(),},
+        body: JSON.stringify(pool)
+    };
+
+    const responseJson = fetch(endpoint, requestOptions)
+        .then(response => {
+            if (response.ok) {
+                if (response.status === 204) {
+                    return "Connection refused"
+                } else {
+                    return response.json();
+                }
+            } else {
+                throw new Error(response.status);
+            }
+        })
+        .catch(error => console.log('Error sincronizando  Pool: ', error));
+
+    return responseJson
+}
+
+
+export {getPools, createPool, getPool, updatePool, deletePool, syncronizePool }

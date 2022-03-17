@@ -12,7 +12,7 @@ import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
 
 import {ReOrderableItem, ReOrderableList} from "react-reorderable-list";
-import {Loading, Message} from "../utils/LittleComponents";
+import {Loading, Message} from "../../components/utils/LittleComponents";
 
 import {getVirtualMachines} from "../../services/VirtualMachines";
 
@@ -123,11 +123,11 @@ function TransferList(props) {
                 role="list"
             >
                 {items.map((value) => {
-                    const labelId = `transfer-list-all-item-${value.name}-label`;
+                    const labelId = `transfer-list-all-item-${value.name_host}-label`;
 
                     return (
                         <ListItem
-                            key={value.uuid}
+                            key={value.id}
                             role="listitem"
                             button
                             onClick={handleToggle(value)}
@@ -142,7 +142,7 @@ function TransferList(props) {
                                     }}
                                 />
                             </ListItemIcon>
-                            <ListItemText id={labelId} primary={`${value.name}`}/>
+                            <ListItemText id={labelId} primary={`${value.name_host}`}/>
                         </ListItem>
                     );
                 })}
@@ -190,14 +190,14 @@ function TransferList(props) {
                     onListUpdate={(newList) => setRight(newList)}
                     component={List}>
                     {right.map((value) => {
-                        const labelId = `transfer-list-all-item-${value.name}-label`;
+                        const labelId = `transfer-list-all-item-${value.name_host}-label`;
 
                         return (
                             <ReOrderableItem
-                                key={`item-${value.uuid}`}
+                                key={`item-${value.id}`}
                             >
                                 <ListItem
-                                    key={value.uuid}
+                                    key={value.id}
                                     role="listitem"
                                     button
                                     onClick={handleToggle(value)}
@@ -212,7 +212,7 @@ function TransferList(props) {
                                             }}
                                         />
 
-                                        <ListItemText id={labelId} primary={`${value.name}`}/>
+                                        <ListItemText id={labelId} primary={`${value.name_host}`}/>
 
                                     </ListItemIcon>
                                 </ListItem>

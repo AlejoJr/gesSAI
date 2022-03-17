@@ -1,6 +1,6 @@
 import {useState} from 'react';
 
-export default function useToken() {
+function useToken() {
 
     const getToken = () => {
         const tokenString = localStorage.getItem('token');
@@ -20,3 +20,26 @@ export default function useToken() {
         token,
     }
 }
+
+function useIsTechnical() {
+
+    const getIsTechnical = () => {
+        const tokenString = localStorage.getItem('token');
+        const userToken = JSON.parse(tokenString);
+        return userToken?.is_superuser
+    };
+
+    const [isTechnical, setIsTechnical] = useState(getIsTechnical());
+
+    const saveIsTechnical = userToken => {
+        localStorage.setItem('is_superuser', JSON.stringify(userToken));
+        setIsTechnical(userToken.is_superuser);
+    };
+
+    return {
+        setIsTechnical: saveIsTechnical,
+        isTechnical,
+    }
+}
+
+export {useToken, useIsTechnical}

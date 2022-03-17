@@ -12,13 +12,12 @@ import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-
+import Tooltip from "@mui/material/Tooltip";
 import {confirmAlert} from "react-confirm-alert";
 
 import {deleteHost, hostsByGroup, updateHost} from "../../services/Hosts";
 import {deleteGroup} from "../../services/Groups";
-import {GetIdUser} from "../utils/LittleComponents";
-import Tooltip from "@mui/material/Tooltip";
+import {ValidateFields} from "../utils/LittleComponents";
 
 /***
  * Componente que lista los Hosts con grupo
@@ -42,16 +41,17 @@ function Groups(props) {
     // <<-- | E L I M I N A R - U N A - M Á Q U I N A  |-->
     const delete_machine = (host) => () => {
         confirmAlert({
-            title: 'Borrar Maquina',
+            title: 'Borrar Maquina del Grupo',
             message: 'Esta seguro de borrar la Maquina: ' + host.name_host,
             buttons: [
                 {
                     label: 'Si',
                     onClick: () => setTimeout(() => {
-                        host.groupId = null;
-                        host.order = 0;
                         var iElem;
                         var iHost;
+                        host = ValidateFields(host);
+                        host.groupId = null;
+                        host.order = null;
 
                         // <<- 1). Recorremos los grupos para encontrar y eliminar la maquina seleccionada ->>
                         props.hostGroups.map(function (element, index) {
@@ -61,20 +61,28 @@ function Groups(props) {
                                 if (objHost === host) {
                                     iElem = indexElement;
                                     iHost = indexHost;
-                                    deleteHost(host.id);
+                                    if(host.type_host === 'MF'){
+                                        updateHost(host);
+                                    }
+                                    if(host.type_host === 'MV'){
+                                        deleteHost(host.id);
+                                    }
+
                                 }
                             });
                         });
 
                         // <<- 2). Eliminamos el host del grupo y actualizamos el estado de los grupos ->>
                         props.hostGroups[iElem].hosts.splice(iHost, 1);
-
-                        // <<- 3). Si ya no existen maquinas en el grupo, eliminamos el grupo ->>
+                        // <<- 3). Agregamos el host del grupo y actualizamos el estado de los grupos ->>
+                        if(host.type_host === 'MF'){
+                            props.hosts.push(host);
+                        }
+                        // <<- 4). Si ya no existen maquinas en el grupo, eliminamos el grupo ->>
                         if (props.hostGroups[iElem].hosts.length === 0) {
                             deleteGroup(props.hostGroups[iElem].idGroup);
                             props.hostGroups.splice(iElem, 1);
                         }
-
                         navigate('/hosts');
 
                     })
@@ -103,15 +111,19 @@ function Groups(props) {
 
                         // <<- 1). Actualizamos los hosts para que no pertenezcan a un grupo ->>
                         response.hosts.map(function (host) {
-                            delete host.group_id;
-                            delete host.user_id;
-                            host.user = GetIdUser();
+                            host = ValidateFields(host);
 
                             host.groupId = null;
-                            host.order = 0;
+                            host.order = null;
 
-                            updateHost(host);
-                            props.hosts.push(host);//<-- lista de (hosts) sin grupo del (componente padre)
+                            if(host.type_host === 'MF'){
+                                updateHost(host);
+                                props.hosts.push(host);//<-- lista de (hosts) sin grupo del (componente padre)*/
+                            }
+                            if(host.type_host === 'MV'){
+                                deleteHost(host.id);
+                            }
+
                         });
 
                         //<<- 2). Actualizamos el Estado (hosts) del componente Padre (ContainerHosts) ->>
@@ -120,7 +132,7 @@ function Groups(props) {
                         // <<- 3). Eliminamos el Grupo ->>
                         deleteGroup(group.idGroup);
 
-                        props.hostGroups.map(function (element, index) {
+                       props.hostGroups.map(function (element, index) {
                             if (element.idGroup === group.idGroup) {
                                 iElem = index;
                             }
@@ -180,7 +192,7 @@ function Groups(props) {
         } else if (value.so === 'M') {
             return <a> Mac</a>;
         } else {
-            return <a> --</a>;
+            return <a> -- </a>;
         }
     });
 
@@ -193,14 +205,44 @@ function Groups(props) {
                     aria-controls={value.host.name_host}
                     id={value.host.id}
                 >
-                    <Typography variant="subtitle1">{value.host.name_host}</Typography>
+                    {
+                        value.host.type_host === 'MF' &&
+                        <Typography variant="subtitle1">{value.host.name_host}{tab}-{tab} <Typography variant="caption"> {'Máquina Física'}</Typography> </Typography>
+                    }
+                    {
+                        value.host.type_host === 'MV' &&
+                        <Typography variant="subtitle1">{value.host.name_host}{tab}-{tab} <Typography variant="caption"> Pool: {value.host.pool.name_pool}</Typography></Typography>
+                    }
                 </AccordionSummary>
                 <AccordionDetails>
                     <Typography variant="button" component="div">
-                        <strong>Ip:</strong> {value.host.ip} <br/>
-                        <strong>Mac:</strong> {value.host.mac} <br/>
-                        <strong>Sitema Operativo:</strong>{<OperatingSystem so={value.host.so}/>}<br/>
-                        <strong>Descripción:</strong> {value.host.description}
+                        {
+                            value.host.type_host === 'MF' &&
+                            <div>
+                                <strong>Ip:</strong> {value.host.ip} <br/>
+                                <strong>Mac:</strong> {value.host.mac} <br/>
+                                <strong>Sitema Operativo:</strong>{<OperatingSystem so={value.host.so}/>}<br/>
+                                <strong>Descripción:</strong> {value.host.description}
+                            </div>
+                        }
+                        {
+                            value.host.type_host === 'MV' &&
+                            <div>
+                                <strong>Máquina virtual</strong> <br/>
+                                <strong>Pool:</strong> {value.host.pool.name_pool} <br/>
+                                <strong>Sitema Operativo:</strong>{<OperatingSystem so={value.host.so}/>}<br/>
+                                <strong>Descripción:</strong> {value.host.description}
+                            </div>
+                        }
+                        {
+                            value.host.type_host === 'HM' &&
+                            <div>
+                                <strong>Host Master</strong> <br/>
+                                <strong>Pool:</strong> {value.host.pool.name_pool} <br/>
+                                <strong>Ip:</strong> {value.host.pool.ip} <br/>
+                            </div>
+                        }
+
                     </Typography>
                     <Tooltip title="Editar Máquina">
                         <IconButton aria-label="edit-machine-group" color="primary"

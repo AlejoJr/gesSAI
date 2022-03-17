@@ -5,7 +5,6 @@ import reportWebVitals from './reportWebVitals';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 import {createTheme, ThemeProvider} from '@mui/material/styles';
-import {purple, blue, green} from '@mui/material/colors';
 
 
 const theme = createTheme({

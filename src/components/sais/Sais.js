@@ -9,7 +9,6 @@ import Card from '@mui/material/Card';
 import CardContent from "@mui/material/CardContent";
 import IconButton from '@mui/material/IconButton';
 import EditIcon from '@mui/icons-material/Edit';
-import SyncIcon from '@mui/icons-material/Sync';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import Typography from "@mui/material/Typography";
@@ -21,26 +20,20 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 
 import {SubTitle, Title} from "../utils/Title";
-import {deletePool, getPools, syncronizePool} from "../../services/Pools";
-import {Loading} from "../utils/LittleComponents";
+import {deleteSai, getSais} from "../../services/Sais";
 
 /***
- * Componente que lista los POOL
+ * Componente que lista los SAIS
  ***/
-function Pool() {
+function Sais() {
 
     let navigate = useNavigate();
 
     const [anchorEl, setAnchorEl] = useState(null);
     const open = Boolean(anchorEl);
 
-    const [namePoolLoading, setNamePoolLoading] = useState('');
-    const [pools, setPools] = useState([]);
+    const [sais, setSais] = useState([]);
     const [expanded, setExpanded] = useState(false);
-    const [isLoading, setLoading] = useState(false);
-    const [isErrorSyncPool, setErrorSyncPool] = useState(false);
-
-
 
 
     const handleChange = (panel) => (event, isExpanded) => {
@@ -49,42 +42,42 @@ function Pool() {
 
 
     useEffect(function () {
-        getPools_Api()
+        getSais_Api()
     }, [])
 
-    const getPools_Api = async () => {
+    const getSais_Api = async () => {
 
-        const poolsJson = await getPools();
+        const saisJson = await getSais();
 
         //<<-- | O R D E N A M O S - A L F A B E T I C A M E N T E - (Aa-Zz)  |-->
-        var listPools = poolsJson.results.sort(function (a, b) {
-            if (a.name_pool == b.name_pool) {
+        var listSais = saisJson.results.sort(function (a, b) {
+            if (a.name_sai == b.name_sai) {
                 return 0;
             }
-            if (a.name_pool < b.name_pool) {
+            if (a.name_sai < b.name_sai) {
                 return -1;
             }
             return 1;
         });
 
-        setPools(listPools);
+        setSais(listSais);
     }
 
-    // <<-- | E L I M I N A R - U N - P O O L  |-->
-    const poolDelete = (pool) => () => {
+    // <<-- | E L I M I N A R - U N - S A I  |-->
+    const saiDelete = (sai) => () => {
         confirmAlert({
-            title: 'Borrar POOL',
-            message: 'Esta seguro de borrar el Pool: ' + pool.name_pool,
+            title: 'Borrar SAI',
+            message: 'Esta seguro de borrar el SAI: ' + sai.name_sai,
             buttons: [
                 {
                     label: 'Si',
                     onClick: () => setTimeout(() => {
-                        // <<- 1). Eliminamos el pool de la Base de datos ->>
-                        deletePool(pool.id)
-                        // <<- 2). Eliminamos el pool de la lista (listPools) ->>
-                        var listPools = pools.filter(el => el.id !== pool.id);
-                        // <<- 3). Actualizamos el Estado (pools) ->>
-                        setPools(listPools);
+                        // <<- 1). Eliminamos el sai de la Base de datos ->>
+                        deleteSai(sai.id)
+                        // <<- 2). Eliminamos el sai de la lista (listSais) ->>
+                        var listSais = sais.filter(el => el.id !== sai.id);
+                        // <<- 3). Actualizamos el Estado (sais) ->>
+                        setSais(listSais);
                     })
                 },
                 {
@@ -95,61 +88,41 @@ function Pool() {
         });
     }
 
-    // <<-- | S I N C R O N I Z A R - U N - P O O L  |-->
-    const syncPool = (pool) => async () => {
-        setNamePoolLoading(pool.name_pool);
-        setLoading(true);
-        const syncPoolsJson = await syncronizePool(pool);
-
-        if (syncPoolsJson === 'Sync-OK') {
-            setLoading(false);
-        }else{
-            setLoading(false);
-            setErrorSyncPool(true);
-        }
-
-    }
-
-
-    // <<-- | A C O R D I O N - P O O L |-->
-    const ItemPool = ((value) => {
+    // <<-- | A C O R D I O N - U S E R  |-->
+    const ItemSai = ((value) => {
         return (
-            <Accordion expanded={expanded === value.pool.name_pool} onChange={handleChange(value.pool.name_pool)}>
+            <Accordion expanded={expanded === value.sai.name_sai} onChange={handleChange(value.sai.name_sai)}>
                 <AccordionSummary
                     expandIcon={<ExpandMoreIcon/>}
-                    aria-controls={value.pool.name_pool}
-                    id={value.pool.id}
+                    aria-controls={value.sai.name_sai}
+                    id={value.sai.id}
                 >
-                    <Typography variant="subtitle1">{value.pool.name_pool}</Typography>
+                    <Typography variant="subtitle1">{value.sai.name_sai}</Typography>
                 </AccordionSummary>
                 <AccordionDetails>
                     <Typography variant="button" component="div">
-                        <strong>Nombre:</strong> {value.pool.name_pool} <br/>
-                        <strong>Ip:</strong> {value.pool.ip}<br/>
-                        <strong>Url:</strong> {value.pool.url} <br/>
-                        <strong>Username:</strong> {value.pool.username}<br/>
-                        <strong>Hipervisor:</strong> {value.pool.type}<br/>
+                        <strong>Nombre:</strong> {value.sai.name_sai} <br/>
+                        <strong>Url:</strong> {value.sai.url} <br/>
+                        <strong>Ip:</strong> {value.sai.ip}<br/>
+                        <strong>Mac:</strong> {value.sai.mac}<br/>
+                        <strong>Codigo MIB:</strong> {value.sai.code_oid}<br/>
+                        <strong>Apagar Máquinas a los :</strong> {value.sai.value_off} Min<br/>
+                        <strong>Encender Máquinas a los :</strong> {value.sai.value_on} Min<br/>
                     </Typography>
 
 
-                    <Tooltip title="Editar Pool">
-                        <IconButton aria-label="edit-pool" color="primary"
+                    <Tooltip title="Editar Sai">
+                        <IconButton aria-label="edit-sai" color="primary"
                                     onClick={() => {
-                                        navigate(`/pool/${value.pool.id}`)
+                                        navigate(`/sai/${value.sai.id}`)
                                     }}>
                             <EditIcon/>
                         </IconButton>
                     </Tooltip>
-                    <Tooltip title="Eliminar Pool">
-                        <IconButton aria-label="delete-pool" color="primary"
-                                    onClick={poolDelete(value.pool)}>
+                    <Tooltip title="Eliminar Sai">
+                        <IconButton aria-label="delete-sai" color="primary"
+                                    onClick={saiDelete(value.sai)}>
                             <DeleteIcon/>
-                        </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Sincronizar Pool">
-                        <IconButton aria-label="sync-pool" color="primary"
-                                    onClick={syncPool(value.pool)}>
-                            <SyncIcon/>
                         </IconButton>
                     </Tooltip>
                 </AccordionDetails>
@@ -165,8 +138,8 @@ function Pool() {
 
     const handleClose = (event) => {
         setAnchorEl(null);
-        if (event.currentTarget.id === 'createPool') {
-            navigate(`/pool/${0}`)
+        if (event.currentTarget.id === 'createSai') {
+            navigate(`/sai/${0}`)
         }
     };
 
@@ -186,7 +159,7 @@ function Pool() {
               justify="center"
               marginTop={5}
               style={{minHeight: '100vh'}}>
-            <Title title={'POOLS'}/>
+            <Title title={'SAIS'}/>
             <SubTitle title={'_'}/>
             <Grid container
                   spacing={0}
@@ -196,17 +169,8 @@ function Pool() {
                   marginTop={2}>
                 <Card sx={{minWidth: '97%'}}>
                     <CardContent>
-                        {
-                            isLoading && <Loading></Loading>
-                        }
-                        {
-                            isLoading && <p>Sincronizando Pool: <strong>{namePoolLoading}</strong></p>
-                        }
-                        {
-                            isErrorSyncPool && <p><strong>Ocurrio un Error Sincronizando Pool:</strong> {namePoolLoading}</p>
-                        }
-                        {pools.map((value, index) => (
-                            <ItemPool pool={value} key={`pool-${index}`} index={index}/>
+                        {sais.map((value, index) => (
+                            <ItemSai sai={value} key={`sai-${index}`} index={index}/>
                         ))}
                     </CardContent>
                     {/*<CardActions>
@@ -240,11 +204,11 @@ function Pool() {
                     horizontal: 'left',
                 }}
             >
-                <MenuItem id="createPool" onClick={handleClose}>Alta Pool</MenuItem>
+                <MenuItem id="createSai" onClick={handleClose}>Alta Sai</MenuItem>
             </Menu>
         </Grid>
     )
 
 }
 
-export default Pool
+export default Sais

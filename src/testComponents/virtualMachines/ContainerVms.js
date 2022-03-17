@@ -5,7 +5,7 @@ import {styled} from '@mui/material/styles';
 import Paper from '@mui/material/Paper';
 import Grid from '@mui/material/Grid';
 import TransferList from "./TransferList";
-import {Title} from "../utils/Title";
+import {Title} from "../../components/utils/Title";
 
 const Item = styled(Paper)(({theme}) => ({
     ...theme.typography.body2,

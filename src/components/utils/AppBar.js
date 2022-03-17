@@ -1,44 +1,40 @@
 import React, {useState, useEffect} from "react";
+import {NavLink, Outlet} from "react-router-dom";
+
+import Menu from '@mui/material/Menu';
+import Tooltip from '@mui/material/Tooltip';
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
-import Menu from '@mui/material/Menu';
 import MenuIcon from '@mui/icons-material/Menu';
 import Container from '@mui/material/Container';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
-import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
-import {NavLink, Outlet} from "react-router-dom";
-import {useNavigate} from "react-router-dom";
 import Divider from '@mui/material/Divider';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-
-import {createTheme} from '@mui/material/styles';
-import {amber, grey, blueGrey, deepOrange, lightGreen, teal} from "@material-ui/core/colors";
-import {ListItemIcon} from "@material-ui/core";
 import LogoutIcon from '@mui/icons-material/Logout';
+//import {amber} from "@material-ui/core/colors";
+//import {createTheme} from '@mui/material/styles';
+import {ListItemIcon} from "@material-ui/core";
 
-import {GetUsername} from "./LittleComponents";
+import {GetIsTechnical, GetUsername} from "./LittleComponents";
 
 
 const pages = [
     {'page': 'hosts', 'namePage': 'Máquinas'},
-    {'page': 'pools', 'namePage': 'Virtualización'},
-    {'page': 'vms', 'namePage': 'Máquinas virtuales'}
+    {'page': 'pools', 'namePage': 'Pools'}
 ];
 const settings = ['Logout'];
 
-const ResponsiveAppBar = (props) => {
+const ResponsiveAppBar = () => {
 
     const [anchorElNav, setAnchorElNav] = useState(null);
     const [anchorElUser, setAnchorElUser] = useState(null);
 
     const [userLogin, setUserLogin] = useState();
-
-    let navigate = useNavigate();
 
     const handleOpenNavMenu = (event) => {
         setAnchorElNav(event.currentTarget);
@@ -65,7 +61,7 @@ const ResponsiveAppBar = (props) => {
         setAnchorElUser(null);
     };
 
-    const theme = createTheme({
+    /*const theme = createTheme({
 
         palette: {
             primary: amber,
@@ -76,9 +72,14 @@ const ResponsiveAppBar = (props) => {
                 default: '#fdcdd4',
             },
         },
-    });
+    });*/
 
     useEffect(function () {
+        const isTecnico = GetIsTechnical()
+        if (isTecnico) {
+            pages.push({'page': 'sais', 'namePage': 'Sais'})
+            pages.push({'page': 'users', 'namePage': 'Usuarios'})
+        }
         setUserLogin(GetUsername);
     }, [])
 

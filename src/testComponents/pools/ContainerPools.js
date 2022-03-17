@@ -9,14 +9,14 @@ import Fab from "@mui/material/Fab";
 
 import 'react-confirm-alert/src/react-confirm-alert.css'; // Import css
 
-import Groups from "../groups/Groups";
+import Groups from "../../components/groups/Groups";
 import Pools from "./Pools";
 import {getHosts, getHostsMaster} from "../../services/Hosts";
-import {Title, SubTitle} from "../utils/Title";
-import {GetIdUser} from "../utils/LittleComponents";
+import {Title, SubTitle} from "../../components/utils/Title";
+import {GetIdUser} from "../../components/utils/LittleComponents";
 
 /***
- * Componente (principal contenedor) que muestra los componentes (Pools y Pools-Groups)
+ * Componente (principal contenedor) que muestra los componentes (Pools y Pools-Groups_uno)
  ***/
 function ContainerPools() {
 
@@ -28,6 +28,7 @@ function ContainerPools() {
     const [hostGroups, setHostGroup] = useState([]); //Hosts Con grupo
 
     useEffect(function () {
+        setHostGroup([]);
         getHosts_Api();
     }, [])
 
@@ -38,7 +39,7 @@ function ContainerPools() {
 
         //<<-- | O R D E N A M O S - A L F A B E T I C A M E N T E - (Aa-Zz)  |-->
         var resultHost = hostsMasterJson.hosts.sort(function (a, b) {
-            if (a.name_host == b.name_host) {
+            if (a.name_host === b.name_host) {
                 return 0;
             }
             if (a.name_host < b.name_host) {
@@ -65,6 +66,7 @@ function ContainerPools() {
                     ip: host.ip,
                     mac: host.mac,
                     so: host.so,
+                    type_host: host.type_host,
                     group: host.group.id,
                     order: host.order,
                     description: host.description,

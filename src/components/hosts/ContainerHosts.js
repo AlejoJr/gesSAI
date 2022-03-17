@@ -11,11 +11,13 @@ import 'react-confirm-alert/src/react-confirm-alert.css'; // Import css
 
 import Groups from "../groups/Groups";
 import Hosts from "./Hosts";
-import {getHosts} from "../../services/Hosts";
+import HostsMasterPool from "./HostsMasterPool";
+import {getHosts, getHostsMaster} from "../../services/Hosts";
 import {Title, SubTitle} from "../utils/Title";
+import {GetIdUser} from "../utils/LittleComponents";
 
 /***
- * Componente (principal contenedor) que muestra los componentes (Hosts y Groups)
+ * Componente (principal contenedor) que muestra los componentes (Hosts y Groups_uno)
  ***/
 function ContainerHosts() {
 
@@ -25,6 +27,7 @@ function ContainerHosts() {
     let navigate = useNavigate();
     const [hosts, setHosts] = useState([]); //Hosts sin grupo
     const [hostGroups, setHostGroup] = useState([]); //Hosts Con grupo
+    const [pools, setPools] = useState([]); //Pools (Hosts-Master)
 
     useEffect(function () {
         getHosts_Api();
@@ -32,6 +35,47 @@ function ContainerHosts() {
 
     //Obtener los ContainerHosts de la API
     const getHosts_Api = async () => {
+
+        const idUser = GetIdUser();
+        const hostsMasterJson = await getHostsMaster(idUser);
+
+        if (hostsMasterJson !== 'Without-Machines') {
+            //<<-- | O R D E N A M O S - A L F A B E T I C A M E N T E - (Aa-Zz)  |-->
+            var resultPools = hostsMasterJson.hosts.sort(function (a, b) {
+                if (a.name_host == b.name_host) {
+                    return 0;
+                }
+                if (a.name_host < b.name_host) {
+                    return -1;
+                }
+                return 1;
+            });
+
+            resultPools.map((host) => {
+                if (!pools.hasOwnProperty(host.pool.id)) {
+                    pools[host.pool.id] = {
+                        name_pool: host.pool.name_pool,
+                        name_host: host.name_host,
+                        ip: host.pool.ip,
+                        mac: host.mac,
+                        url: host.pool.url,
+                        others: []
+                    }
+                }
+
+                hostsMasterJson.others.map((value) => {
+                    if (value.pool.id === host.pool.id) {
+                        pools[host.pool.id].others.push({
+                            name_host: value.name_host,
+                        })
+                    }
+                });
+            });
+
+            setPools(pools.filter(el => el != null))
+            //setPools(resultPools);
+        }
+
         const hostsJson = await getHosts();
 
         //Ordenamos ascendentemente por grupo
@@ -39,8 +83,11 @@ function ContainerHosts() {
             return (a.group - b.group)
         })
 
+        //Excluimos las maquinas host master (Hipervisor)
+        var listHosts = resultHost.filter(el => el.type_host !== 'HM');
+
         //Recorremos los host y los agrupamos si pertenecen a un grupo
-        resultHost.forEach(host => {
+        listHosts.forEach(host => {
             if (host.group !== null) {
                 if (!hostGroups.hasOwnProperty(host.group.id)) {
                     hostGroups[host.group.id] = {
@@ -56,6 +103,7 @@ function ContainerHosts() {
                     ip: host.ip,
                     mac: host.mac,
                     so: host.so,
+                    type_host: host.type_host,
                     group: host.group.id,
                     order: host.order,
                     description: host.description,
@@ -65,16 +113,11 @@ function ContainerHosts() {
             }
         })
 
-        /* var index = 1
-         hostGroups.forEach(group => {
-             group.idGroup = index
-             index++
-         })*/
-
         setHostGroup(hostGroups.filter(el => el != null))
 
-        //Filtramos solo los host que no estan en ningun grupo
-        setHosts(resultHost.filter(el => el.group === null));
+        //<<- Filtramos solo los host - (Maquinas Fisicas) que NO pertenecen a un grupo->>
+        setHosts(listHosts.filter(el => el.group === null).filter(el => el.type_host === 'MF'));
+
     }
 
 
@@ -107,10 +150,18 @@ function ContainerHosts() {
               alignItems="center"
               justify="center"
               marginTop={5}
+              marginBottom={4}
               style={{minHeight: '100vh'}}>
             <Title title={'MÁQUINAS'}/>
 
-            <SubTitle title={'Máquinas sin orden de apagado'}/>
+            <SubTitle title={'Pools'}/>
+            <HostsMasterPool
+                //Enviamos el estado (setHost) a este componente hijo para que lo actualice
+                hosts={pools}
+                setHosts={setPools}
+            />
+
+            <SubTitle title={'Máquinas Físicas sin orden de apagado'}/>
             <Hosts
                 //Enviamos el estado (setHost) a este componente hijo para que lo actualice
                 hosts={hosts}
@@ -153,8 +204,8 @@ function ContainerHosts() {
                     horizontal: 'left',
                 }}
             >
-                <MenuItem id="createMachine" onClick={handleClose}>Alta Maquina</MenuItem>
-                <MenuItem id="newGroup" onClick={handleClose}>Nuevo Grupo</MenuItem>
+                <MenuItem id="createMachine" onClick={handleClose}>Alta Máquina Física</MenuItem>
+                <MenuItem id="newGroup" onClick={handleClose}>Alta Grupo</MenuItem>
             </Menu>
         </Grid>
 
