@@ -144,4 +144,4 @@ function GetIsTechnical() {
     return userToken?.is_superuser;
 }
 
-export {Loading, Message, ValidateFields, SerializerHost_MV, GetToken, GetIdUser, GetUsername, GetIsTechnical };
+export {Loading, Message, ValidateFields, SerializerHost_MV, GetToken, GetIdUser, GetUsername, GetIsTechnical};

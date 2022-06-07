@@ -138,5 +138,38 @@ async function tryConnectionSai(sai) {
     return responseJson
 }
 
+/***
+ * Obtener la bateria de los SAIS
+ * @param sai
+ * @returns {Promise<Sais>}
+ */
+async function getBatterySai(sai) {
+    var endpoint = `${baseUrl}/battery-sai/`;
 
-export {getSais, getSai, createSai, updateSai, deleteSai, tryConnectionSai}
+    const requestOptions = {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'Authorization': 'Token ' + GetToken(),},
+        body: JSON.stringify(sai)
+    };
+
+    const responseJson = fetch(endpoint, requestOptions)
+        .then(response => {
+            if (response.ok) {
+                if (response.status === 203) {
+                    return {'Connection': 'NOT-FOUND', 'Code': "Machine Not Found"}
+                } else if (response.status === 204) {
+                    return {'Connection': 'ERROR', 'Code': "Connection refused"}
+                } else {
+                    return response.json();
+                }
+            } else {
+                throw new Error(response.status);
+            }
+        })
+        .catch(error => console.log('Error probando conexión al SAI: ', error));
+
+    return responseJson
+}
+
+
+export {getSais, getSai, createSai, updateSai, deleteSai, tryConnectionSai, getBatterySai}

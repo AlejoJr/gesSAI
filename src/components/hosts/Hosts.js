@@ -13,8 +13,12 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import Typography from "@mui/material/Typography";
 import {confirmAlert} from "react-confirm-alert";
-import {deleteHost} from "../../services/Hosts";
+import {deleteHost, getTreeDependence} from "../../services/Hosts";
 import Tooltip from "@mui/material/Tooltip";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import TreeView from "@mui/lab/TreeView";
+import TreeItem from "@mui/lab/TreeItem";
+import LaptopMacIcon from "@mui/icons-material/LaptopMac";
 
 /***
  * Componente que lista los Hosts sin grupo
@@ -69,6 +73,7 @@ function Hosts(props) {
 
     // <<-- | F O R M A T E A R - S T R I N G - (S I S T E M A - O P E R A T I V O)  |-->
     const OperatingSystem = ((value) => {
+
         if (value.so === 'W') {
             return <a> Windows</a>;
         } else if (value.so === 'L') {
@@ -79,6 +84,18 @@ function Hosts(props) {
             return <a> --</a>;
         }
     });
+
+
+    const tab = <>&nbsp;&nbsp;&nbsp;&nbsp;</>;
+
+    const ItemHostDependences = ((value) => {
+        return (
+            <Typography variant="button" component="div">
+                {tab} <LaptopMacIcon></LaptopMacIcon> {value.child.name_host} - ({value.child.type_host})<br/>
+            </Typography>
+        );
+    });
+
 
     // <<-- | A C O R D I O N - H O S T  |-->
     const ItemHost = ((value) => {
@@ -95,16 +112,23 @@ function Hosts(props) {
                     {
                         value.host.type_host === 'MF' &&
                         <Typography variant="button" component="div">
+                            <strong>Máquina física</strong><br/><br/>
                             <strong>Ip:</strong> {value.host.ip} <br/>
                             <strong>Mac:</strong> {value.host.mac} <br/>
                             <strong>Sitema Operativo:</strong>{<OperatingSystem so={value.host.so}/>}<br/>
-                            <strong>Descripción:</strong> {value.host.description}
+                            <strong>Descripción:</strong> {value.host.description}<br/>
+                            {/*value.host.host_host.length > 0 &&
+                            < strong> Dependencias:</strong>
+                            */}
+                            {/*value.host.host_host.map((value, index) => (
+                                <ItemHostDependences child={value} key={`child-${index}`} index={index}/>
+                            ))*/}
                         </Typography>
                     }
                     {
                         value.host.type_host === 'MV' &&
                         <Typography variant="button" component="div">
-                            <strong>Máquina virtual</strong> <br/>
+                            <strong>Máquina virtual</strong> <br/><br/>
                             <strong>Pool:</strong> {value.host.pool.name_pool} <br/>
                         </Typography>
                     }
@@ -114,6 +138,22 @@ function Hosts(props) {
                             <strong>Host Master</strong> <br/>
                             <strong>Pool:</strong> {value.host.pool.name_pool} <br/>
                             <strong>Ip:</strong> {value.host.pool.ip} <br/>
+                        </Typography>
+                    }
+                    {
+                        value.host.type_host === 'SM' &&
+                        <Typography variant="button" component="div">
+                            <strong>Máquina de almacenamiento</strong><br/><br/>
+                            <strong>Ip:</strong> {value.host.ip} <br/>
+                            <strong>Mac:</strong> {value.host.mac} <br/>
+                            <strong>Sitema Operativo:</strong>{<OperatingSystem so={value.host.so}/>}<br/>
+                            <strong>Descripción:</strong> {value.host.description}<br/>
+                            {/*value.host.host_host.length > 0 &&
+                            < strong> Dependencias:</strong>
+                            */}
+                            {/*value.host.host_host.map((value, index) => (
+                                <ItemHostDependences child={value} key={`child-${index}`} index={index}/>
+                            ))*/}
                         </Typography>
                     }
                     <Tooltip title="Editar Máquina">

@@ -121,7 +121,7 @@ function Sai() {
             mac,
             url,
             protocol,
-            "state": "Free",
+            "state": "not started",
             "administrator": admon,
             code_oid,
             value_off,
@@ -274,6 +274,7 @@ function Sai() {
                                     name="authkey"
                                     label="Clave de Autorización"
                                     size="small"
+                                    type={"password"}
                                     disabled={parseInt(idSai) > 0 ? true : false}
                                     value={authKey}
                                     variant="outlined"
@@ -289,6 +290,7 @@ function Sai() {
                                     name="privKey"
                                     label="Clave Privada"
                                     size="small"
+                                    type={"password"}
                                     disabled={parseInt(idSai) > 0 ? true : false}
                                     value={privKey}
                                     variant="outlined"

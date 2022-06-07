@@ -6,9 +6,12 @@ import CardActions from "@mui/material/CardActions";
 import InputLabel from '@mui/material/InputLabel';
 import TextField from '@mui/material/TextField';
 import Alert from "@mui/material/Alert";
+import Link from '@mui/material/Link';
 import SearchIcon from "@mui/icons-material/Search";
+import PriorityHighIcon from '@mui/icons-material/PriorityHigh';
 import ClearIcon from '@mui/icons-material/Clear';
 import CheckIcon from '@mui/icons-material/Check';
+import Typography from '@mui/material/Typography';
 import FormControl from '@mui/material/FormControl';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
@@ -18,14 +21,20 @@ import Grid from "@mui/material/Grid";
 import Card from "@mui/material/Card";
 import Divider from "@mui/material/Divider";
 import {styled} from "@mui/material/styles";
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
 
 import {Title} from "../utils/Title";
 import {Loading, GetIdUser, Message} from "../utils/LittleComponents";
-import {getHost, createHost, updateHost, existHostByName_bdExternal} from "../../services/Hosts";
+import {getHost, createHost, updateHost, existHostByName_bdExternal, downloadFile} from "../../services/Hosts";
 import OutlinedInput from "@mui/material/OutlinedInput";
 import Checkbox from "@mui/material/Checkbox";
 import ListItemText from "@mui/material/ListItemText";
 import {getSais} from "../../services/Sais";
+import FormControlLabel from "@mui/material/FormControlLabel";
 
 
 const Item = styled(Paper)(({theme}) => ({
@@ -64,6 +73,10 @@ function Host() {
     const [isLoading, setLoading] = useState(false);
     const [isReady, setIsReady] = useState(false);
     const [isError, setIsError] = useState(false);
+    const [activeMessage, setActiveMessage] = useState(false);
+    const [message, setMessage] = useState('');
+    const [is_machineStorage, setIsMachineStorage] = useState(false);
+    const [open, setOpen] = useState(false);
 
     const [nameTextField, setNameTextField] = useState('');
 
@@ -75,11 +88,13 @@ function Host() {
     const [group, setGroup] = useState(null);
     const [order, setOrder] = useState(null);
     const [description, setDescription] = useState('');
+    const [domain, setDomain] = useState('');
     const [pool, setPool] = useState('');
     const [user, setUser] = useState('');
     const [type_host, setType_host] = useState('');
     const [saisSelected, setSaisSelected] = useState([]);
     const [sais, setSais] = useState([]);
+    const [host_host, setHostHost] = useState([]);
 
     let navigate = useNavigate();
 
@@ -93,7 +108,7 @@ function Host() {
     // <<-- | O B T E N E R - U N - H O S T  |-->
     const getHost_Api = async () => {
 
-         //Se obtienen los SAIS existentes para llenar el select
+        //Se obtienen los SAIS existentes para llenar el select
         const saisJson = await getSais();
 
         var listSais = [];
@@ -133,13 +148,18 @@ function Host() {
             setPool(hostJson.pool === null ? null : hostJson.pool.id);
             setUser(hostJson.user);
             setType_host(hostJson.type_host);
+            setHostHost(hostJson.host_host);
+
+            if (hostJson.type_host === 'SM') {
+                setIsMachineStorage(true)
+            }
 
             //Sais del Host
             var arraySais = [];
             if (listSais.length > 0) {
                 hostJson.sais.map((value) => {
                     listSais.map((sai) => {
-                        if(sai['id'] === value){
+                        if (sai['id'] === value) {
                             arraySais.push(sai['name_sai']);
                         }
                     });
@@ -184,6 +204,7 @@ function Host() {
         var so_host = so === '' ? null : so;
         var pool_host = pool === null ? null : pool;
         var typeHost = type_host !== '' ? type_host : "MF";
+        typeHost = is_machineStorage === true ? "SM" : typeHost;
         var groupId = idGroup !== undefined ? idGroup : null;
         var idsSais = getIdsSais();
 
@@ -199,13 +220,18 @@ function Host() {
             "poolId": pool_host,
             "user": GetIdUser(),
             "type_host": typeHost,
-             "sais": idsSais
+            "sais": idsSais,
+            "host_host": host_host
         }
-
-        if (idHost > 0) {
-            hostApi(modelHost, "update");
+        if (domain.length > 0) {
+            if (idHost > 0) {
+                hostApi(modelHost, "update");
+            } else {
+                hostApi(modelHost, "create");
+            }
         } else {
-            hostApi(modelHost, "create")
+            setMessage('Debe escribir un Dominio para la Máquina');
+            setActiveMessage(true);
         }
     }
 
@@ -257,6 +283,43 @@ function Host() {
         );
     };
 
+
+    // <<--| M A N E J A R - E L - C A M B I O - EN - EL - (TEXTFIELD-DOMAIN) |-->>
+    const handlerFocusOut = (e) => {
+        setActiveMessage(false);
+        var onlyNameHost = name_host.split(".");
+
+        if (domain !== '') {
+            setNameHost(onlyNameHost[0] + '.' + domain);
+        } else {
+            setNameHost(onlyNameHost[0]);
+        }
+    }
+
+    // <<--| M A N E J A R - E L - C A M B I O - EN - EL - (CHECKBOX) |-->>
+    const handleChangeCheckBox = (event) => {
+        setIsMachineStorage(event.target.checked)
+        if (event.target.checked) {
+            setExistMachine(true);
+        } else {
+            setExistMachine(false);
+            setNameTextField('');
+        }
+    }
+
+    // <<--| M A N E J A R - E L - C A M B I O - EN - EL - (DIALOG) |-->>
+    const handleClickOpen = () => {
+        setOpen(true);
+    };
+
+    const handleClose = () => {
+        setOpen(false);
+    };
+
+    const handleDowndLoadFile = () => {
+        downloadFile('http://localhost:8000/download/id_rsa.pub', 'id_rsa');
+    };
+
     return (
         <>
             <Grid
@@ -273,6 +336,17 @@ function Host() {
                 <Item>
                     {
                         idHost == 0 &&
+                        <FormControlLabel
+                            value="top"
+                            control={<Checkbox checked={is_machineStorage}
+                                               onChange={handleChangeCheckBox}
+                                               inputProps={{'aria-label': 'controlled'}}/>}
+                            label="Es Almacenamiento"
+                            labelPlacement="top"
+                        />
+                    }
+                    {
+                        idHost == 0 && !is_machineStorage &&
                         <Grid container
                               spacing={1}
                               marginTop={1}
@@ -323,7 +397,7 @@ function Host() {
                                     </Grid>
                                     <Grid item xs={8} marginTop={2}>
                                         <TextField
-                                            disabled
+                                            disabled={is_machineStorage === true ? false : true}
                                             id="id_nameHost"
                                             name="nameHost"
                                             label="Nombre de Maquina"
@@ -331,11 +405,25 @@ function Host() {
                                             value={name_host}
                                             variant="outlined"
                                             className="form-control"
+                                            onChange={(e) => setNameHost(e.target.value)}
                                         />
                                     </Grid>
                                     <Grid item xs={8} marginTop={2}>
                                         <TextField
-                                            disabled
+                                            id="id_Domain"
+                                            name="domain"
+                                            label="Dominio"
+                                            size="small"
+                                            value={domain}
+                                            variant="outlined"
+                                            className="form-control"
+                                            onChange={(e) => setDomain(e.currentTarget.value)}
+                                            onBlur={handlerFocusOut}
+                                        />
+                                    </Grid>
+                                    <Grid item xs={8} marginTop={2}>
+                                        <TextField
+                                            disabled={is_machineStorage === true ? false : true}
                                             id="id_ip"
                                             name="ip"
                                             label="Ip"
@@ -343,11 +431,12 @@ function Host() {
                                             value={ip}
                                             variant="outlined"
                                             className="form-control"
+                                            onChange={(e) => setIp(e.target.value)}
                                         />
                                     </Grid>
                                     <Grid item xs={8} marginTop={2}>
                                         <TextField
-                                            disabled
+                                            disabled={is_machineStorage === true ? false : true}
                                             id="id_mac"
                                             name="mac"
                                             label="Mac"
@@ -355,6 +444,7 @@ function Host() {
                                             value={mac}
                                             variant="outlined"
                                             className="form-control"
+                                            onChange={(e) => setMac(e.target.value)}
                                         />
                                     </Grid>
                                     <Grid item xs={8} marginTop={2}>
@@ -383,7 +473,7 @@ function Host() {
                                             <Select
                                                 labelId="demo-multiple-checkbox-label"
                                                 id="demo-multiple-checkbox"
-                                                multiple
+                                                //multiple
                                                 size="small"
                                                 value={saisSelected}
                                                 autoFocus={saisSelected.length > 0 ? true : false}
@@ -396,7 +486,8 @@ function Host() {
                                             >
                                                 {sais.map((sai) => (
                                                     <MenuItem key={sai.id} value={sai.name_sai}>
-                                                        <Checkbox checked={saisSelected.indexOf(sai.name_sai) > -1}/>
+                                                        <Checkbox checked={saisSelected.indexOf(sai.name_sai) > -1}
+                                                        />
                                                         <ListItemText primary={sai.name_sai}/>
                                                     </MenuItem>
                                                 ))}
@@ -454,6 +545,99 @@ function Host() {
                         <strong>{nameTextField}</strong>
                     </Alert>
                     }
+                    {
+                        activeMessage &&
+                        <Alert severity="warning">
+                            {message}
+                        </Alert>
+                    }
+
+                    <Button variant="text" onClick={handleClickOpen} startIcon={<PriorityHighIcon/>}>
+                        Instrucciones Importantes
+                    </Button>
+                    <Dialog
+                        maxWidth={"md"}
+                        open={open}
+                        onClose={handleClose}
+                        aria-labelledby="alert-dialog-title"
+                        aria-describedby="alert-dialog-description"
+                    >
+                        <DialogTitle id="alert-dialog-title">
+                            {"Integrar máquina al sistema de automatización de apagado y encendido"}
+                        </DialogTitle>
+                        <DialogContent>
+                            <DialogContentText id="alert-dialog-description">
+                                <Typography  component={'span'} variant="body2" display="block" gutterBottom>
+                                    Para que la máquina que desea dar de alta sea reconocida por el sistema al
+                                    momento de su apagado o encendido haga lo siguiente dependiendo del sistema
+                                    operativo.
+                                </Typography>
+                                <Typography component={'span'} variant="overline" display="block" gutterBottom>
+                                    <strong>Linux:</strong>
+                                </Typography>
+                                <Typography  component={'span'} variant="body2" display="block" gutterBottom>
+                                    Descargue el <Link href="" onClick={handleDowndLoadFile}>Archivo</Link> de clave publica y copielo en la siguiente ruta de la máquina
+                                    /root/.ssh/authorized_keys
+                                </Typography>
+                                <Typography component={'span'} variant="body2" display="block" gutterBottom>
+                                    Luego de esto abra el archivo que se encuentra en la ruta /etc/ssh/sshd_config
+                                    y edite las siguientes lineas.
+                                </Typography>
+                                <Typography component={'span'} variant="caption" display="block" gutterBottom>
+                                    <strong> -</strong> PermitRootLogin yes
+                                </Typography>
+                                <Typography component={'span'} variant="caption" display="block" gutterBottom>
+                                    <strong> -</strong> PasswordAuthentication yes
+                                </Typography>
+                                <Typography component={'span'} variant="body2" display="block" gutterBottom>
+                                    Habilite el usuario root con los siguientes comandos:
+                                </Typography>
+                                <Typography component={'span'} variant="caption" display="block" gutterBottom>
+                                    <strong> -</strong> sudo -i
+                                </Typography>
+                                <Typography component={'span'} variant="caption" display="block" gutterBottom>
+                                    <strong> -</strong> sudo passwd root
+                                </Typography>
+                                <Typography component={'span'} variant="overline" display="block" gutterBottom>
+                                    <strong>Windows:</strong>
+                                </Typography>
+                                <Typography component={'span'} variant="body2" display="block" gutterBottom>
+                                    Cree un usuario root y que este pertenezca al grupo de administradores
+                                </Typography>
+                                <Typography component={'span'} variant="body2" display="block" gutterBottom>
+                                    Descargue el <Link href="" onClick={handleDowndLoadFile}>Archivo</Link> de clave publica y copielo en la siguiente ruta de la máquina
+                                    C:/Users/root/.ssh/authorized_keys
+                                </Typography>
+                                <Typography component={'span'} variant="body2" display="block" gutterBottom>
+                                    Luego de esto abra el archivo que se encuentra en la ruta
+                                    C:/ProgramData/ssh/sshd_config y edite las siguientes lineas.
+                                </Typography>
+                                <Typography component={'span'} variant="caption" display="block" gutterBottom>
+                                    <strong> -</strong> PubkeyAuthentication yes
+                                </Typography>
+                                <Typography component={'span'} variant="caption" display="block" gutterBottom>
+                                    <strong> -</strong> PasswordAuthentication no
+                                </Typography>
+                                <Typography component={'span'} variant="body2" display="block" gutterBottom>
+                                    Comente las siguientes líneas que se encuentran al final del archivo
+                                </Typography>
+                                <Typography component={'span'} variant="caption" display="block" gutterBottom>
+                                    <strong> -</strong> #Match Group administrators
+                                </Typography>
+                                <Typography component={'span'} variant="caption" display="block" gutterBottom>
+                                    <strong> -</strong> #AuthorizedKeysFile __PROGRAMDATA__/ssh/administrators_authorized_keys
+                                </Typography>
+                                <Typography component={'span'} variant="body2" display="block" gutterBottom>
+                                    No olvide reiniciar el servicio sshd después de guardar los cambios en sshd_config.
+                                </Typography>
+                            </DialogContentText>
+                        </DialogContent>
+                        <DialogActions>
+                            <Button onClick={handleDowndLoadFile} autoFocus>
+                                Descargar Archivo
+                            </Button>
+                        </DialogActions>
+                    </Dialog>
                 </Item>
             </Grid>
         </>

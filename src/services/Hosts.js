@@ -1,4 +1,7 @@
 import {GetToken} from "../components/utils/LittleComponents";
+import fileDownload from 'js-file-download'
+import axios from "axios";
+
 
 const baseUrl = 'http://localhost:8000/gessaiapi/v1'
 
@@ -185,6 +188,34 @@ async function getHostsMaster(idUser) {
     return responseJson
 }
 
+
+/***
+ * Obtener todos los Hosts Padres por Id de usuario en session
+ * @param idUser
+ * @returns {Promise<HostsFathers>}
+ */
+async function getAllFathers(idUser) {
+    var endpoint = `${baseUrl}/all-host-fathers/`;
+
+    const requestOptions = {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'Authorization': 'Token ' + GetToken(),},
+        body: JSON.stringify({'idUser': idUser})
+    };
+
+    const responseJson = fetch(endpoint, requestOptions)
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error(response.status);
+            }
+        })
+        .catch(error => console.log('Error obteniendo los Hosts Padres asociados al usuario -> ', error));
+
+    return responseJson
+}
+
 /***
  * Obtener todos los Hosts que estan en un grupo
  * @returns {Promise<Host>}
@@ -225,6 +256,155 @@ async function existHostByName_bdLocal(nameHost) {
     return responseJson
 }
 
+/***
+ * Crear la dependencia de maquinas
+ * @returns {Promise<Hosts>}
+ */
+async function createDependence(hostFather, hostChild) {
+    var endpoint = `${baseUrl}/createDependence/`;
+
+    const requestOptions = {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'Authorization': 'Token ' + GetToken(),},
+        body: JSON.stringify({hostFather, hostChild})
+    };
+
+    const responseJson = fetch(endpoint, requestOptions)
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error(response.status);
+            }
+        })
+        .catch(error => console.log('Error creando la dependencia -> ', error));
+
+    return responseJson
+}
+
+/***
+ * Obtener Los Hijos de un Padre (dependencias)
+ * @param hostFather
+ * @returns {Promise<HostChilds>}
+ */
+async function getChildrenFromFather(hostFather) {
+    var endpoint = `${baseUrl}/hosts-children/`;
+
+    const requestOptions = {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'Authorization': 'Token ' + GetToken(),},
+        body: JSON.stringify({hostFather})
+    };
+
+    const responseJson = fetch(endpoint, requestOptions)
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error(response.status);
+            }
+        })
+        .catch(error => console.log('Error obteniendo los Hosts Hijos del Padre -> ', error));
+
+    return responseJson
+}
+
+/***
+ * Obtener Los Padres de un Host (dependencias)
+ * @param hostChild
+ * @returns {Promise<HostFathers>}
+ */
+async function getParentsFromParent(hostChild) {
+    var endpoint = `${baseUrl}/hosts-fathers/`;
+
+    const requestOptions = {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'Authorization': 'Token ' + GetToken(),},
+        body: JSON.stringify({hostChild})
+    };
+
+    const responseJson = fetch(endpoint, requestOptions)
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error(response.status);
+            }
+        })
+        .catch(error => console.log('Error obteniendo los Hosts Padres del Hijo -> ', error));
+
+    return responseJson
+}
+
+/***
+ * Elimina las dependencias existentes entre maquina host(padre) y host(hijo).
+ * @returns {Promise<Hosts>}
+ */
+async function deleteDependence(hostFather, hostChild) {
+    var endpoint = `${baseUrl}/deleteDependence/`;
+
+    const requestOptions = {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'Authorization': 'Token ' + GetToken(),},
+        body: JSON.stringify({hostFather, hostChild})
+    };
+
+    const responseJson = fetch(endpoint, requestOptions)
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error(response.status);
+            }
+        })
+        .catch(error => console.log('Error eliminando la dependencia -> ', error));
+
+    return responseJson
+}
+
+
+/***
+ * Obtener El arbol de dependencias de un padre
+ * @param hostFather
+ * @returns {Promise<HostChilds>}
+ */
+async function getTreeDependence(hostFather) {
+    var endpoint = `${baseUrl}/treeDependences/`;
+
+    const requestOptions = {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'Authorization': 'Token ' + GetToken(),},
+        body: JSON.stringify({hostFather})
+    };
+
+    const responseJson = fetch(endpoint, requestOptions)
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error(response.status);
+            }
+        })
+        .catch(error => console.log('Error obteniendo el arbol de dependencias del Padre -> ', error));
+
+    return responseJson
+}
+
+/***
+ * Descargar archivo public key
+ * @returns {Promise<FilePublicKey>}
+ */
+async function downloadFile(url, filename) {
+
+    axios.get(url, {
+        responseType: 'blob',
+    })
+        .then((res) => {
+            fileDownload(res.data, filename)
+        })
+
+}
+
 export {
     getHosts,
     createHost,
@@ -235,5 +415,12 @@ export {
     existHostByName_bdLocal,
     hostsByGroup,
     getHostsMaster,
-    getAllHostsInAGroup
+    getAllFathers,
+    getAllHostsInAGroup,
+    createDependence,
+    getChildrenFromFather,
+    getParentsFromParent,
+    deleteDependence,
+    getTreeDependence,
+    downloadFile
 }

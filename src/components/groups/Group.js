@@ -633,6 +633,16 @@ function Group() {
 
         listAllMachines.map(value => {
             if (value.idPool === option) {
+
+                value.hosts.sort(function (a, b) {
+                    if (a.name_host === b.name_host) {
+                        return 0;
+                    }
+                    if (a.name_host < b.name_host) {
+                        return -1;
+                    }
+                    return 1;
+                })
                 setLeft(value.hosts);
             }
         });

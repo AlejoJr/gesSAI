@@ -71,6 +71,7 @@ function Pool() {
     const [ip, setIp] = useState('');
     const [url, setUrl] = useState('');
     const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
     const [type, setType] = useState('X');
     const [admin, setAdmin] = useState('');
 
@@ -120,6 +121,7 @@ function Pool() {
             setIp(poolJson.ip);
             setUrl(poolJson.url);
             setUsername(poolJson.username);
+            setPassword(poolJson.password);
             setType(poolJson.type);
             setAdmin(poolJson.user);
 
@@ -141,6 +143,7 @@ function Pool() {
             setValue("ip", poolJson.ip);
             setValue("url", poolJson.url);
             setValue("username", poolJson.username);
+            setValue("password", poolJson.password);
             setValue("type", poolJson.type);
             setValue("sai", arraySais);
 
@@ -164,6 +167,7 @@ function Pool() {
             ip,
             url,
             username,
+            password,
             type,
             "user": admon,
             "sais": idsSais
@@ -310,6 +314,22 @@ function Pool() {
                                 />
                             </Grid>
                             <Grid item xs={8} marginTop={2}>
+                                <TextField
+                                    id="id_Password"
+                                    name="password"
+                                    label="Contraseña"
+                                    size="small"
+                                    type={"password"}
+                                    disabled={parseInt(idPool) > 0 ? true : false}
+                                    value={password}
+                                    variant="outlined"
+                                    className="form-control"
+                                    error={errors.password ? true : false}
+                                    {...register("password", {required: true})}//se declara antes del onChange
+                                    onChange={(e) => setPassword(e.currentTarget.value)}
+                                />
+                            </Grid>
+                            <Grid item xs={8} marginTop={2}>
                                 <FormControl fullWidth variant="outlined" sx={{m: 0, minWidth: 100}}>
                                     <InputLabel id="id-type-label">Tipo de Hipervisor</InputLabel>
                                     <Select
@@ -410,7 +430,7 @@ function Pool() {
                 aria-describedby="alert-dialog-description"
             >
                 <DialogTitle id="alert-dialog-title">
-                    {"Operación Exitosa !"}
+                    {"Operación realizada correctamente !"}
                 </DialogTitle>
                 <DialogContent>
                     <DialogContentText id="alert-dialog-description">

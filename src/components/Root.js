@@ -14,6 +14,7 @@ import Users from "./users/Users";
 import User from "./users/User";
 import Sais from "./sais/Sais";
 import Sai from "./sais/Sai";
+import Battery from "./sais/Battery";
 import Pools from "./pools/Pools";
 import Pool from "./pools/Pool";
 
@@ -23,6 +24,9 @@ import NotFoundPage from "./utils/NotFoundPage";
 
 // <<-- Hook Personalizado -->>
 import {useToken, useIsTechnical} from "../customHooks/useToken";
+import Dependence from "./groups/Dependence";
+import Instructions from "./utils/Instructions";
+
 
 
 function Root() {
@@ -48,10 +52,13 @@ function Root() {
                         {isTechnical ? <Route path="user/:idUser" element={<User/>}/> : <Route path="*" element={<NotFoundPage/>}/>}
                         {isTechnical ? <Route path="sais" element={<Sais/>}/> : <Route path="*" element={<NotFoundPage/>}/>}
                         {isTechnical ? <Route path="sai/:idSai" element={<Sai/>}/> : <Route path="*" element={<NotFoundPage/>}/>}
-                        {isTechnical ? <Route path="pools" element={<Pools/>}/> : <Route path="*" element={<NotFoundPage/>}/>}
-                        {isTechnical ? <Route path="pool/:idPool" element={<Pool/>}/> : <Route path="*" element={<NotFoundPage/>}/>}
-                        <Route path="pool/:idPool/group/:idGroup" element={<Group/>}/>
-                        <Route path="group/:idGroup" element={<Group/>}/>
+                        {isTechnical ? <Route path="battery" element={<Battery/>}/> : <Route path="*" element={<NotFoundPage/>}/>}
+                        <Route path="dependences" element={<Dependence/>}/>
+                        <Route path="pools" element={<Pools/>}/>
+                        <Route path="pool/:idPool" element={<Pool/>}/>
+                        <Route path="instructions" element={<Instructions/>}/>
+                        {/*<Route path="pool/:idPool/group/:idGroup" element={<Group/>}/>
+                            <Route path="group/:idGroup" element={<Group/>}/>*/}
                         <Route path="*" element={<NotFoundPage/>}/>
                     </Route>
                 </Routes>

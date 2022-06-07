@@ -4,8 +4,8 @@ import {Link, useNavigate} from "react-router-dom";
 import Typography from '@mui/material/Typography';
 import Grid from "@mui/material/Grid";
 
-const Home = () => {
 
+const Home = () => {
     let navigate = useNavigate();
 
     navigate('/hosts');
@@ -35,7 +35,7 @@ const Home = () => {
                 </Grid>
             </Grid>
         </>
-    )
+    );
 }
 
 export default Home

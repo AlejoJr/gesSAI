@@ -78,7 +78,11 @@ const ResponsiveAppBar = () => {
         const isTecnico = GetIsTechnical()
         if (isTecnico) {
             pages.push({'page': 'sais', 'namePage': 'Sais'})
+            pages.push({'page': 'battery', 'namePage': 'Batería'})
             pages.push({'page': 'users', 'namePage': 'Usuarios'})
+            pages.push({'page': 'instructions', 'namePage': 'Instrucciones'})
+        }else{
+            pages.push({'page': 'instructions', 'namePage': 'Instrucciones'})
         }
         setUserLogin(GetUsername);
     }, [])

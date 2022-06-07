@@ -12,9 +12,10 @@ import 'react-confirm-alert/src/react-confirm-alert.css'; // Import css
 import Groups from "../groups/Groups";
 import Hosts from "./Hosts";
 import HostsMasterPool from "./HostsMasterPool";
-import {getHosts, getHostsMaster} from "../../services/Hosts";
+import {getHosts, getHostsMaster, getTreeDependence, getAllFathers} from "../../services/Hosts";
 import {Title, SubTitle} from "../utils/Title";
 import {GetIdUser} from "../utils/LittleComponents";
+import Dependences from "../groups/Dependences";
 
 /***
  * Componente (principal contenedor) que muestra los componentes (Hosts y Groups_uno)
@@ -28,6 +29,7 @@ function ContainerHosts() {
     const [hosts, setHosts] = useState([]); //Hosts sin grupo
     const [hostGroups, setHostGroup] = useState([]); //Hosts Con grupo
     const [pools, setPools] = useState([]); //Pools (Hosts-Master)
+    const [trees, setTrees] = useState([]); //Arboles (dependencias)
 
     useEffect(function () {
         getHosts_Api();
@@ -87,7 +89,7 @@ function ContainerHosts() {
         var listHosts = resultHost.filter(el => el.type_host !== 'HM');
 
         //Recorremos los host y los agrupamos si pertenecen a un grupo
-        listHosts.forEach(host => {
+        /*listHosts.forEach(host => {
             if (host.group !== null) {
                 if (!hostGroups.hasOwnProperty(host.group.id)) {
                     hostGroups[host.group.id] = {
@@ -113,10 +115,37 @@ function ContainerHosts() {
             }
         })
 
-        setHostGroup(hostGroups.filter(el => el != null))
+        setHostGroup(hostGroups.filter(el => el != null))*/
 
-        //<<- Filtramos solo los host - (Maquinas Fisicas) que NO pertenecen a un grupo->>
-        setHosts(listHosts.filter(el => el.group === null).filter(el => el.type_host === 'MF'));
+        //<<- Filtramos los host - (Maquinas Fisicas y Maquinas almacenaje) ->>
+
+        function filterMachinesMF_SM(obj) {
+            if (obj.type_host === 'MF' || obj.type_host === 'SM') {
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        var listFilterHost = listHosts.filter(filterMachinesMF_SM);
+
+        setHosts(listFilterHost);
+        //setHosts(listHosts.filter(el => el.type_host === 'MF'));
+
+        //<<- Obtener todos los padres mayores para consultar sus ramas (hijos)
+        const allFathersJson = await getAllFathers(idUser);
+
+        var listTrees = [];
+        var treeDependenceJson = [];
+
+        if (allFathersJson !== 'Without-Machines') {
+            for (const hostFather of allFathersJson.hosts) {
+                treeDependenceJson = await getTreeDependence(hostFather);
+                listTrees.push(treeDependenceJson);
+            }
+        }
+
+        setTrees(listTrees);
 
     }
 
@@ -131,9 +160,12 @@ function ContainerHosts() {
         if (event.currentTarget.id === 'createMachine') {
             navigate(`/host/${0}`)
         }
-        if (event.currentTarget.id === 'newGroup') {
-            navigate(`/group/${0}`)
+        if (event.currentTarget.id === 'dependences') {
+            navigate(`/dependences/`)
         }
+        /*if (event.currentTarget.id === 'newGroup') {
+            navigate(`/group/${0}`)
+        }*/
     };
 
     // Estilos del boton para que se quede fijo por toda la pagina
@@ -161,24 +193,29 @@ function ContainerHosts() {
                 setHosts={setPools}
             />
 
-            <SubTitle title={'Máquinas Físicas sin orden de apagado'}/>
+            <SubTitle title={'Máquinas Físicas / Almacenamiento'}/>
             <Hosts
                 //Enviamos el estado (setHost) a este componente hijo para que lo actualice
                 hosts={hosts}
                 setHosts={setHosts}
             />
 
-            <SubTitle title={'Grupos con orden de apagado'}/>
+            <SubTitle title={'Listado de Dependencias'}/>
+            <Dependences
+                hosts={trees}
+            />
+
+            {/*<SubTitle title={'Grupos con orden de apagado'}/>
             {hostGroups.map((value, index) => (
                 <Groups
-                    group={value}
-                    key={`group-${index}`}
-                    hostGroups={hostGroups}
-                    // Se envia lista de hosts sin grupo para actualizarla cuando se borre un grupo
-                    hosts={hosts}
-                    setHosts={setHosts}
+                group={value}
+                key={`group-${index}`}
+                hostGroups={hostGroups}
+                // Se envia lista de hosts sin grupo para actualizarla cuando se borre un grupo
+                hosts={hosts}
+                setHosts={setHosts}
                 />
-            ))}
+                ))}*/}
             <Fab id="demo-positioned-button"
                  aria-controls={open ? 'demo-positioned-menu' : undefined}
                  aria-haspopup="true"
@@ -205,7 +242,8 @@ function ContainerHosts() {
                 }}
             >
                 <MenuItem id="createMachine" onClick={handleClose}>Alta Máquina Física</MenuItem>
-                <MenuItem id="newGroup" onClick={handleClose}>Alta Grupo</MenuItem>
+                <MenuItem id="dependences" onClick={handleClose}>Alta Dependencias</MenuItem>
+                {/*<MenuItem id="newGroup" onClick={handleClose}>Alta Grupo</MenuItem>*/}
             </Menu>
         </Grid>
 
